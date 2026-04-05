@@ -1,0 +1,55 @@
+@import "@fontsource/noto-serif/400.css";
+@import "@fontsource/noto-serif/400-italic.css";
+@import "@fontsource/noto-serif/700.css";
+@import "@fontsource/manrope/300.css";
+@import "@fontsource/manrope/400.css";
+@import "@fontsource/manrope/500.css";
+@import "@fontsource/manrope/600.css";
+@import "@fontsource/manrope/700.css";
+@import "tailwindcss";
+
+@theme {
+  --font-headline: "Noto Serif", serif;
+  --font-body: "Manrope", sans-serif;
+
+  --color-background: #151024;
+  --color-surface: #151024;
+  --color-surface-low: #1d192c;
+  --color-surface-high: #2b273c;
+  --color-surface-highest: #363247;
+  --color-primary: #cebdff;
+  --color-primary-container: #2b0074;
+  --color-secondary: #e9c349;
+  --color-error: #ffb4ab;
+  --color-on-surface: #e7defa;
+  --color-on-surface-variant: #ccc4cf;
+  --color-outline-variant: #4a454e;
+}
+
+@layer base {
+  body {
+    @apply bg-background text-on-surface font-body selection:bg-primary/30;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-surface-highest/60 backdrop-blur-xl border border-outline-variant/15;
+  }
+
+  .nebula-gradient {
+    background: linear-gradient(135deg, #cebdff 0%, #2b0074 100%);
+  }
+
+  .nebula-glow {
+    box-shadow: 0 0 40px rgba(206, 189, 255, 0.15);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}

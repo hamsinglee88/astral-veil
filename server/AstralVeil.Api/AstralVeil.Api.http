@@ -1,0 +1,27 @@
+@AstralVeil.Api_HostAddress = http://localhost:5020
+
+### 健康检查
+GET {{AstralVeil.Api_HostAddress}}/health
+Accept: application/json
+
+###
+
+### OpenAPI（Development）
+GET {{AstralVeil.Api_HostAddress}}/openapi/v1.json
+Accept: application/json
+
+###
+
+### 运势（需配置 OPENAI_API_KEY，否则 503 NO_API_KEY）
+POST {{AstralVeil.Api_HostAddress}}/api/horoscope
+Content-Type: application/json
+
+{
+  "birthYear": 1999,
+  "birthMonth": 11,
+  "birthDay": 8,
+  "zodiacLabel": "天蝎座",
+  "dateISO": "2026-04-04"
+}
+
+###
