@@ -19,10 +19,11 @@ describe('buildHoroscopeRequestBody', () => {
       birthMonth: 11,
       birthDay: 8,
       zodiacLabel: '天蝎座',
+      phone: '13800138000',
       dateISO: '2026-04-04',
     });
     expect(Object.keys(body).sort()).toEqual(
-      ['birthDay', 'birthMonth', 'birthYear', 'dateISO', 'zodiacLabel'].sort(),
+      ['birthDay', 'birthMonth', 'birthYear', 'dateISO', 'phone', 'zodiacLabel'].sort(),
     );
   });
 });

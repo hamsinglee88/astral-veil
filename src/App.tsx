@@ -13,6 +13,7 @@ import {
 import { ProfileProvider } from './ProfileContext';
 import { clearUserDataOnLogout } from './lib/logoutClear';
 import { loadProfile, saveProfile, type UserProfile } from './lib/userProfile';
+import { syncUserProfileToServer } from './lib/syncUserProfile';
 
 export default function App() {
   const [page, setPage] = useState<Page>('login');
@@ -26,6 +27,11 @@ export default function App() {
       setPage('horoscope');
     }
   }, []);
+
+  useEffect(() => {
+    if (!profile) return;
+    void syncUserProfileToServer(profile);
+  }, [profile]);
 
   const handleLogin = (phone: string) => {
     setLoginPhone(phone);

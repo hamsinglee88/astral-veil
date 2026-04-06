@@ -3,9 +3,10 @@ stepsCompleted: [1, 2, 3, 4]
 inputDocuments:
   - _bmad-output/planning-artifacts/prd.md
   - _bmad-output/planning-artifacts/architecture.md
+  - _bmad-output/planning-artifacts/architecture-signalr-realtime.md
 workflowType: create-epics-and-stories
 status: complete
-completedAt: '2026-04-04'
+completedAt: '2026-04-07'
 project_name: astral-veil
 user_name: Hamsing
 document_language: zh-CN
@@ -16,7 +17,7 @@ prd_reference_version: '1.2'
 
 **作者：** Hamsing  
 **日期：** 2026-04-04  
-**输入：** `prd.md` v1.2、`architecture.md`（棕地：前端与开发期运势中间件已存在）
+**输入：** `prd.md` v1.2、`architecture.md`、`architecture-signalr-realtime.md`（棕地：前端与开发期运势中间件已存在）
 
 ---
 
@@ -61,6 +62,13 @@ prd_reference_version: '1.2'
 - 开发环境 **Vite 代理** `/api` → .NET；`OPENAI_API_KEY` 仅服务端 / User Secrets。
 - 运势端点 **限流**（公开接口）；MVP 档案仍为 **localStorage**；增长期再定 PostgreSQL / JWT 等。
 
+### 架构补充（`architecture-signalr-realtime.md`，增长期）
+
+- **SignalR** 作为树洞广播与匹配推送的实时通道；**REST** 负责消息/队列写库与幂等。
+- **TreeHoleHub**：房间分组、`NewMessage` 推送；历史列表以 **GET** 为主。
+- **MatchHub**：服务端队列权威、`Matched` 推送；与 PRD 增长期「匹配服务端化」一致。
+- 多实例：**Redis Backplane** 或 **Azure SignalR Service**；前端 **`@microsoft/signalr`** 单例连接。
+
 ### UX 设计文档
 
 **无** 独立 UX 稿；验收以 PRD 旅程 §6 与上述 FR/NFR 为准。
@@ -69,15 +77,15 @@ prd_reference_version: '1.2'
 
 ## FR 覆盖映射（步骤 2）
 
-| FR | Epic |
-|----|------|
-| FR-A1～FR-A3 | E2 账号与档案 |
-| FR-H1～FR-H4 | E1 可靠每日运势 |
-| FR-T1～FR-T3 | E3 树洞群聊 |
-| FR-M1～FR-M5 | E4 随机匹配 |
-| FR-N1、FR-N2 | E5 应用壳与导航 |
+| FR | Epic（MVP） | 增长期强化（E6） |
+|----|-------------|------------------|
+| FR-A1～FR-A3 | E2 账号与档案 | — |
+| FR-H1～FR-H4 | E1 可靠每日运势 | — |
+| FR-T1～FR-T3 | E3 树洞群聊 | **E6**：跨设备可见、服务端持久、SignalR 广播 |
+| FR-M1～FR-M5 | E4 随机匹配 | **E6**：服务端公平队列、实时配对通知 |
+| FR-N1、FR-N2 | E5 应用壳与导航 | — |
 
-**NFR 归属：** NFR1、NFR2、NFR3、NFR4 主要随 **E1**（运势链路与密钥）；NFR5 横切各 Epic 文案审查；NFR6 随 **E5** 与关键交互回归。
+**NFR 归属：** NFR1、NFR2、NFR3、NFR4 主要随 **E1**（运势链路与密钥）；NFR5 横切各 Epic 文案审查；NFR6 随 **E5** 与关键交互回归；增长期实时连接与 UGC **限流/鉴权** 随 **E6**。
 
 ---
 
@@ -90,6 +98,19 @@ prd_reference_version: '1.2'
 | **E3** | 树洞群聊 | 用户在共享房间中浏览与发送消息，分类筛选不阻断核心能力。 |
 | **E4** | 随机匹配 | 用户主动进队，系统在多人时随机配对并展示匹配结果。 |
 | **E5** | 应用壳与导航 | 用户在四大模块间切换，品牌标题一致，主路径具备基本可访问性基线。 |
+| **E6** | 实时社交与服务端状态（增长期） | 多用户在树洞看到彼此消息、消息可持久化；匹配队列由服务端维护并通过 SignalR 送达结果，满足 PRD 增长期与 SignalR 架构补充。 |
+
+---
+
+### Epic 6 概要（步骤 2；Story 见「Epic 6」详情节）
+
+**Epic 6：实时社交与服务端状态（增长期）**
+
+用户在**真实多用户环境**中使用树洞与匹配：消息不局限于本机 `localStorage`，匹配不依赖浏览器间 `BroadcastChannel`；服务端为权威，SignalR 提供低延迟推送。
+
+**FRs covered（增长态验收）：** FR-T1～FR-T3、FR-M1～FR-M5 在 **服务端 + 实时** 语义下的强化（与 PRD §10「增长期」及 `architecture-signalr-realtime.md` 对齐）。
+
+**依赖：** E1～E5 已交付 MVP 行为；E6 在 **独立部署** 下可逐项交付（先 Hub 联调，再落库，再替换前端数据源）。
 
 ---
 
@@ -325,15 +346,76 @@ prd_reference_version: '1.2'
 
 ---
 
+### Epic 6：实时社交与服务端状态（增长期）
+
+**目标：** FR-T1～FR-T3、FR-M1～FR-M5 在**服务端权威 + SignalR 实时**语义下的增长态验收；对齐 `architecture-signalr-realtime.md`。
+
+#### Story 6.1 — 树洞实时广播（TreeHoleHub）
+
+**用户故事：** 作为用户，我希望在同一树洞房间内，其他在线用户发送的消息能即时出现在我的屏幕上，无需手动刷新。
+
+**验收标准：**
+
+- **Given** 至少两名用户已加入同一树洞房间（或等价分组）  
+- **When** 用户 A 发送一条合法消息  
+- **Then** 用户 B 在数秒内收到 **NewMessage** 推送（SignalR），内容与发送一致— FR-T1、FR-T2（实时语义）
+
+**覆盖：** FR-T1、FR-T2（增长态）
+
+---
+
+#### Story 6.2 — 树洞消息服务端持久与历史拉取
+
+**用户故事：** 作为用户，我希望刷新页面或换设备后仍能看到近期树洞消息，而不是只存在本机浏览器里。
+
+**验收标准：**
+
+- **Given** 服务端已提供树洞消息的写入与查询接口（REST），且消息落库或等价持久层  
+- **When** 用户发送消息成功后请求历史列表  
+- **Then** 返回包含该消息及合理时间窗口内的记录；与仅 `localStorage` 的 MVP 行为相比，**跨会话/跨设备**可见— FR-T1、FR-T3
+
+**覆盖：** FR-T1、FR-T3（增长态）
+
+---
+
+#### Story 6.3 — 匹配服务端队列与配对推送（MatchHub）
+
+**用户故事：** 作为用户，我希望匹配排队与配对由服务端公平执行，配对成功后我能立即收到结果，而不依赖本机与其他标签页之间的浏览器通道。
+
+**验收标准：**
+
+- **Given** 多名用户通过 REST 入队，服务端维护队列权威  
+- **When** 满足配对条件（至少两人、策略与 PRD 一致）  
+- **Then** 双方收到 **Matched**（或等价）推送；配对结果可展示资料卡片— FR-M1～FR-M5（服务端 + 实时语义）
+
+**覆盖：** FR-M1、FR-M2、FR-M3、FR-M4、FR-M5（增长态）
+
+---
+
+#### Story 6.4 — SignalR 连接可靠性与前端集成
+
+**用户故事：** 作为用户，在网络抖动或短暂断线后，我希望应用自动恢复实时通道，且不会出现大量重复连接导致异常。
+
+**验收标准：**
+
+- **Given** 前端使用 **`@microsoft/signalr`** 单例（或项目约定等价物）连接 Hub  
+- **When** 连接中断后恢复  
+- **Then** 自动重连并恢复订阅；关键操作失败时有可理解的降级或重试提示（与 NFR 及架构「重连/多实例」方向一致）
+
+**覆盖：** NFR（实时可用性基线）；支撑 FR-T*、FR-M* 增长态体验
+
+---
+
 ## 覆盖度与一致性检查（步骤 4）
 
 | 检查项 | 结果 |
 |--------|------|
-| 每个 FR 至少映射到一个 Story | ✓ |
+| 每个 FR 至少映射到一个 Story | ✓（MVP：E1～E5；增长态强化：E6） |
 | 每个 Epic 有明确用户价值说明 | ✓ |
 | Story 可独立验收（Given/When/Then） | ✓ |
 | 架构关键点（.NET 运势 API、代理、超时兜底、OpenAPI、密钥）已落入 E1 | ✓ |
-| 棕地说明：E2～E5 多条为**验收/硬化**；E1 含**新建后端**工作 | ✓ |
+| SignalR、TreeHole/Match Hub、REST 写库 + Hub 推送（`architecture-signalr-realtime.md`）已落入 E6 | ✓ |
+| 棕地说明：E2～E5 多条为**验收/硬化**；E1 含**新建后端**工作；E6 为**增长期独立增量** | ✓ |
 
 ---
 
@@ -342,7 +424,8 @@ prd_reference_version: '1.2'
 1. **E1** Story 1.1 → 1.2 → 1.3 → 1.4（运势链路与生产路径）  
 2. **E5** 与 **E2** 可与 E1 并行做回归与掩码/注销验收  
 3. **E3、E4** 以当前 SPA 行为对照 Story 做差距关闭与测试  
+4. **E6** 在 MVP 稳定后按 **6.1 → 6.2 → 6.3 → 6.4** 迭代（Hub 实时 → 持久化 → 匹配服务端化 → 连接与集成硬化）；多实例 **Redis Backplane / Azure SignalR** 按部署环境在 6.1/6.4 中择点落地  
 
 ---
 
-*本文件由 `create-epics-and-stories` 工作流生成，与 `prd.md` v1.2、`architecture.md` 保持一致。*
+*本文件由 `create-epics-and-stories` 工作流生成，与 `prd.md` v1.2、`architecture.md`、`architecture-signalr-realtime.md` 保持一致。*

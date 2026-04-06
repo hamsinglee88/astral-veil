@@ -106,7 +106,7 @@ dotnet new webapi -n AstralVeil.Api -o server/AstralVeil.Api --use-controllers
 | **风格** | **REST + JSON**（JSON 属性 **camelCase**） | 与 PRD §14 及现有前端 `fetch` 一致。 |
 | **文档** | **OpenAPI 3**（Swashbuckle 或 NSwag） | 供人与智能体消费。 |
 | **错误** | 稳定 **`error` 码**（如 `NO_API_KEY`、`AI_UPSTREAM` …） | 与 PRD §14.3 及前端处理对齐。 |
-| **实时（未来）** | **SignalR**（匹配 / 聊天） | 待持久化与鉴权就绪后再做。 |
+| **实时（未来）** | **SignalR**（匹配 / 聊天） | 待持久化与鉴权就绪后再做；**专文：** [`architecture-signalr-realtime.md`](./architecture-signalr-realtime.md)（Hub 划分、REST 分工、扩展）。 |
 
 ### 4.4 前端架构
 
@@ -234,6 +234,7 @@ astral-veil/
 ## 9. 参考资料
 
 - 产品需求：`_bmad-output/planning-artifacts/prd.md` v1.2  
+- **树洞与匹配实时架构（SignalR）：** [`architecture-signalr-realtime.md`](./architecture-signalr-realtime.md)  
 - .NET 支持周期：[https://dotnet.microsoft.com/platform/support/policy](https://dotnet.microsoft.com/platform/support/policy)  
 - OpenAI 兼容 Chat HTTP：[https://platform.openai.com/docs/api-reference/chat](https://platform.openai.com/docs/api-reference/chat)（通用 HTTP 集成模式）
 

@@ -2,8 +2,10 @@ using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using AstralVeil.Api.Data;
 using AstralVeil.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -30,6 +32,15 @@ builder.Services.AddControllers().AddJsonOptions(o =>
 });
 
 builder.Services.AddOpenApi();
+
+builder.Services.AddDbContext<AppDbContext>((sp, o) =>
+{
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    var dir = Path.Combine(env.ContentRootPath, "Data");
+    Directory.CreateDirectory(dir);
+    var dbPath = Path.Combine(dir, "astral_veil.db");
+    o.UseSqlite($"Data Source={dbPath}");
+});
 
 var permitLimit = builder.Configuration.GetValue("RateLimiting:Horoscope:PermitLimit", 60);
 var windowSeconds = builder.Configuration.GetValue("RateLimiting:Horoscope:WindowSeconds", 60);
@@ -64,6 +75,12 @@ builder.Services.AddHttpClient("openai", client =>
 builder.Services.AddScoped<HoroscopeAiService>();
 
 var app = builder.Build();
+
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {

@@ -9,6 +9,8 @@ export interface HoroscopeApiRequestBody {
   birthMonth: number;
   birthDay: number;
   zodiacLabel: string;
+  /** 大陆手机号，用于每日运势缓存与用户关联 */
+  phone: string;
   /** 运势日期 YYYY-MM-DD；省略时由服务端或调用方约定 */
   dateISO?: string;
 }
@@ -25,6 +27,7 @@ export function buildHoroscopeRequestBody(
     birthMonth: profile.birthMonth,
     birthDay: profile.birthDay,
     zodiacLabel: getZodiacLabel(profile.zodiacId),
+    phone: profile.phone,
     dateISO,
   };
 }

@@ -21,4 +21,8 @@ public sealed class HoroscopeRequest
 
     [JsonPropertyName("dateISO")]
     public string? DateISO { get; init; }
+
+    /// <summary>用于每日运势缓存与 SQLite 用户关联；建议传大陆手机号。</summary>
+    [JsonPropertyName("phone")]
+    public string? Phone { get; init; }
 }

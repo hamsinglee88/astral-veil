@@ -7,7 +7,7 @@ using AstralVeil.Api.Models;
 namespace AstralVeil.Api.Services;
 
 /// <summary>
-/// 调用 OpenAI 兼容 Chat Completions，生成结构化运势 JSON。
+/// 调用 OpenAI 兼容 Chat Completions（默认 DeepSeek），生成结构化运势 JSON。
 /// </summary>
 public sealed class HoroscopeAiService(
     IHttpClientFactory httpClientFactory,
@@ -22,12 +22,14 @@ public sealed class HoroscopeAiService(
 
     public async Task<HoroscopeServiceResult> GenerateAsync(HoroscopeRequest req, CancellationToken cancellationToken)
     {
-        var apiKey = configuration["OPENAI_API_KEY"] ?? configuration["AI_API_KEY"];
+        var apiKey = configuration["DEEPSEEK_API_KEY"]
+                     ?? configuration["OPENAI_API_KEY"]
+                     ?? configuration["AI_API_KEY"];
         if (string.IsNullOrWhiteSpace(apiKey))
             return HoroscopeServiceResult.Fail(503, "NO_API_KEY", null);
 
-        var baseUrl = (configuration["OPENAI_BASE_URL"] ?? "https://api.openai.com/v1").TrimEnd('/');
-        var model = configuration["OPENAI_MODEL"] ?? "gpt-4o-mini";
+        var baseUrl = (configuration["OPENAI_BASE_URL"] ?? "https://api.deepseek.com/v1").TrimEnd('/');
+        var model = configuration["OPENAI_MODEL"] ?? "deepseek-chat";
         var dateIso = string.IsNullOrWhiteSpace(req.DateISO)
             ? DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd")
             : req.DateISO!;
@@ -76,7 +78,7 @@ public sealed class HoroscopeAiService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "OpenAI 请求失败");
+            logger.LogError(ex, "运势 AI（DeepSeek/兼容接口）请求失败");
             return HoroscopeServiceResult.Fail(500, "HOROSCOPE_FAILED", ex.Message);
         }
 
