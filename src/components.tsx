@@ -648,6 +648,10 @@ export const TreeHolePage = () => {
   });
   /** Story 6.1：与 .NET Hub 同会话，卸载时 disconnect */
   const treeHoleRealtimeRef = useRef<Awaited<ReturnType<typeof connectTreeHoleRealtime>> | null>(null);
+  /** 供发送时 await：避免「连接未完成就发送」导致从未调用 Hub、他人收不到消息 */
+  const treeHoleConnectPromiseRef = useRef<Promise<
+    Awaited<ReturnType<typeof connectTreeHoleRealtime>> | null
+  > | null>(null);
   const [treeHoleRealtimeReady, setTreeHoleRealtimeReady] = useState(false);
 
   useEffect(() => {
@@ -658,7 +662,7 @@ export const TreeHolePage = () => {
   useEffect(() => {
     if (!isTreeHoleRealtimeEnabled()) return;
     let cancelled = false;
-    void connectTreeHoleRealtime((payload: TreeHoleRealtimePayload) => {
+    const p = connectTreeHoleRealtime((payload: TreeHoleRealtimePayload) => {
       if (cancelled) return;
       setMessages((prev) => {
         if (prev.some((m) => m.id === payload.id)) return prev;
@@ -678,19 +682,23 @@ export const TreeHolePage = () => {
       .then((api) => {
         if (cancelled) {
           void api.disconnect();
-          return;
+          return null;
         }
         treeHoleRealtimeRef.current = api;
         setTreeHoleRealtimeReady(true);
+        return api;
       })
       .catch((err) => {
         console.warn('树洞实时连接失败', err);
+        return null;
       });
+    treeHoleConnectPromiseRef.current = p;
     return () => {
       cancelled = true;
       setTreeHoleRealtimeReady(false);
       void treeHoleRealtimeRef.current?.disconnect();
       treeHoleRealtimeRef.current = null;
+      treeHoleConnectPromiseRef.current = null;
     };
   }, []);
 
@@ -712,11 +720,20 @@ export const TreeHolePage = () => {
       },
     ]);
     setInput('');
-    if (isTreeHoleRealtimeEnabled() && treeHoleRealtimeRef.current) {
-      void treeHoleRealtimeRef.current.send(t, category).catch((err) => {
+    if (!isTreeHoleRealtimeEnabled()) return;
+    void (async () => {
+      try {
+        let api = treeHoleRealtimeRef.current;
+        if (!api && treeHoleConnectPromiseRef.current) {
+          api = (await treeHoleConnectPromiseRef.current) ?? null;
+        }
+        if (api) {
+          await api.send(t, category);
+        }
+      } catch (err) {
         console.warn('树洞广播发送失败', err);
-      });
-    }
+      }
+    })();
   };
 
   const filtered = useMemo(
@@ -762,9 +779,12 @@ export const TreeHolePage = () => {
         <div className="flex items-center gap-2 text-on-surface-variant text-xs font-label px-1 flex-wrap">
           <MessageCircle size={14} />
           当前房间：星河大厅（群聊）
-          {isTreeHoleRealtimeEnabled() && treeHoleRealtimeReady && (
-            <span className="text-secondary">· 实时已连接</span>
-          )}
+          {isTreeHoleRealtimeEnabled() &&
+            (treeHoleRealtimeReady ? (
+              <span className="text-secondary">· 实时已连接</span>
+            ) : (
+              <span className="text-amber-200/90">· 正在连接实时通道…</span>
+            ))}
         </div>
         {filtered.map((msg) => (
           <div
