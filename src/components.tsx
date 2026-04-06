@@ -49,6 +49,7 @@ import {
   type TreeHoleMessage,
   type TreeHoleTabIndex,
 } from './lib/treeHole';
+import { createClientMessageId } from './lib/clientRandomId';
 import {
   connectTreeHoleRealtime,
   isTreeHoleRealtimeEnabled,
@@ -702,7 +703,7 @@ export const TreeHolePage = () => {
     setMessages((m) => [
       ...m,
       {
-        id: crypto.randomUUID(),
+        id: createClientMessageId(),
         author: '我',
         text: t,
         self: true,
