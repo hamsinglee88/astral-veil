@@ -1,9 +1,10 @@
 server/**/bin/
 server/**/obj/
 
-# IDE / BMAD 安装器副本：保留在本地，不纳入仓库体积与 diff
-.cursor/
-_bmad/
+# Cursor：忽略 `.cursor` 下除 `skills`（BMAD 工作流）以外的内容
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/**
 
 node_modules/
 build/
