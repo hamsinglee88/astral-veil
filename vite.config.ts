@@ -44,6 +44,12 @@ export default defineConfig(({ mode }) => {
                 target: apiTarget,
                 changeOrigin: true,
               },
+              // SignalR WebSocket / negotiate，与 .NET 同站点开发联调
+              '/hubs': {
+                target: apiTarget,
+                changeOrigin: true,
+                ws: true,
+              },
             },
           }
         : {}),

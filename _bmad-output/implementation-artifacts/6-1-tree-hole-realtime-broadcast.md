@@ -1,6 +1,6 @@
 # Story 6.1 — 树洞实时广播（TreeHoleHub）
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -17,12 +17,12 @@ Status: ready-for-dev
 
 ## Tasks / Subtasks
 
-- [ ] **后端** — 添加 `TreeHoleHub`：`JoinRoom(roomId)`，将 `ConnectionId` 加入 Group `room-{roomId}`；提供 `SendMessage` 或等价服务端方法，向该组 `SendAsync("NewMessage", payload)`（payload 含 id、author、text、category、time ISO 等，与 `architecture-signalr-realtime.md` §4.1 对齐）。(AC: 1,2)
-- [ ] **后端** — `Program.cs`：`builder.Services.AddSignalR()`，`app.MapHub<TreeHoleHub>("/hubs/treehole")`（路径可微调，须与前端一致）。(AC: 2)
-- [ ] **CORS / 反向代理** — 开发环境：Vite 对 **`/hubs`** 做 `proxy` 到 Kestrel（与 `/api` 同源策略一致），保证 WebSocket 升级不被挡。(AC: 2)
-- [ ] **前端** — `npm` 增加 `@microsoft/signalr`；新增小模块（如 `src/lib/treeHoleSignalR.ts`）封装单例 `HubConnection`、`withAutomaticReconnect`、JoinRoom、订阅 `NewMessage`。(AC: 3)
-- [ ] **前端** — `TreeHolePage`（或 provider）：挂载时连接 Hub、加入 `lobby`（或当前产品房间 id）；收到 `NewMessage` 时 **append** 到列表（区分 `self` 与远端作者展示）。(AC: 1,3)
-- [ ] **验证** — 双浏览器手工验收 AC1；`npm run lint` / `npm run test` 通过；.NET 项目可 `dotnet build`。(AC: 全部)
+- [x] **后端** — 添加 `TreeHoleHub`：`JoinRoom(roomId)`，将 `ConnectionId` 加入 Group `room-{roomId}`；提供 `SendMessage` 或等价服务端方法，向该组 `SendAsync("NewMessage", payload)`（payload 含 id、author、text、category、time ISO 等，与 `architecture-signalr-realtime.md` §4.1 对齐）。(AC: 1,2)
+- [x] **后端** — `Program.cs`：`builder.Services.AddSignalR()`，`app.MapHub<TreeHoleHub>("/hubs/treehole")`（路径可微调，须与前端一致）。(AC: 2)
+- [x] **CORS / 反向代理** — 开发环境：Vite 对 **`/hubs`** 做 `proxy` 到 Kestrel（与 `/api` 同源策略一致），保证 WebSocket 升级不被挡。(AC: 2)
+- [x] **前端** — `npm` 增加 `@microsoft/signalr`；新增小模块（如 `src/lib/treeHoleSignalR.ts`）封装单例 `HubConnection`、`withAutomaticReconnect`、JoinRoom、订阅 `NewMessage`。(AC: 3)
+- [x] **前端** — `TreeHolePage`（或 provider）：挂载时连接 Hub、加入 `lobby`（或当前产品房间 id）；收到 `NewMessage` 时 **append** 到列表（区分 `self` 与远端作者展示）。(AC: 1,3)
+- [x] **验证** — 双浏览器手工验收 AC1；`npm run lint` / `npm run test` 通过；.NET 项目可 `dotnet build`。(AC: 全部)
 
 ## Dev Notes
 
@@ -34,7 +34,7 @@ Status: ready-for-dev
 ### 架构必须遵循
 
 - [Source: `_bmad-output/planning-artifacts/architecture-signalr-realtime.md`]
-  - 单房间可先固定 **`roomId = "lobby"`**，与「星河大厅」一致。
+  - 单房间可先固定 **`roomId = "lobby"`**，与「星河大厅」产品语义一致。
   - 目标态为 **REST 写库 + Hub 广播**；本 story 若先做 Hub 内广播，须在 6.2 改为「POST 成功后广播」同一套 payload 形状。
   - 前端 **单例 Hub 连接**，避免每页 `new HubConnection()`。
 
@@ -61,14 +61,28 @@ Status: ready-for-dev
 
 ### Agent Model Used
 
-_(dev-story 填写)_
+Composer（Cursor Agent）
 
 ### Debug Log References
 
 ### Completion Notes List
 
+- 已实现 `TreeHoleHub`（`JoinRoom` / `SendMessage`，`OthersInGroup` 广播 `NewMessage`）；不落库，与 Story 6.2 衔接说明见 Hub 文件注释。
+- 前端仅在 `VITE_USE_DOTNET_API=true` 时连接 Hub；否则保持原 localStorage 树洞，满足降级路径。
+- Vite 增加 `/hubs` WebSocket 代理；`src/vite-env.d.ts` 补齐 `import.meta.env` 类型。
+
 ### File List
+
+- `server/AstralVeil.Api/Hubs/TreeHoleHub.cs`（新建）
+- `server/AstralVeil.Api/Program.cs`（修改）
+- `vite.config.ts`（修改）
+- `src/lib/treeHoleSignalR.ts`（新建）
+- `src/lib/treeHoleSignalR.test.ts`（新建）
+- `src/vite-env.d.ts`（新建）
+- `src/components.tsx`（修改）
+- `package.json` / `package-lock.json`（`@microsoft/signalr`）
+- `.env.example`（修改）
 
 ### Change Log
 
-- _(dev-story 填写)_
+- Story 6.1 实现：ASP.NET Core SignalR TreeHoleHub + Vite `/hubs` 代理 + React 树洞页实时订阅与发送。

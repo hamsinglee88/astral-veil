@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using AstralVeil.Api.Data;
+using AstralVeil.Api.Hubs;
 using AstralVeil.Api.Services;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
@@ -74,6 +75,8 @@ builder.Services.AddHttpClient("openai", client =>
 
 builder.Services.AddScoped<HoroscopeAiService>();
 
+builder.Services.AddSignalR();
+
 var app = builder.Build();
 
 await using (var scope = app.Services.CreateAsyncScope())
@@ -95,6 +98,7 @@ app.MapGet("/health", () => Results.Json(new { status = "ok" }))
     .WithName("Health");
 
 app.MapControllers();
+app.MapHub<TreeHoleHub>("/hubs/treehole");
 
 app.Run();
 
